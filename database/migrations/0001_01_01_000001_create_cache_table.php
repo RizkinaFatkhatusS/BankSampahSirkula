@@ -11,16 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('cache', function (Blueprint $table) {
-            $table->string('key')->primary();
+            Schema::create('cache', function (Blueprint $table) {
+            $table->string('key', 191)->primary();
             $table->mediumText('value');
-            $table->bigInteger('expiration')->index();
+            $table->integer('expiration');
         });
-
         Schema::create('cache_locks', function (Blueprint $table) {
-            $table->string('key')->primary();
-            $table->string('owner');
-            $table->bigInteger('expiration')->index();
+            $table->string('key', 191)->primary();
+            $table->string('owner', 191);
+            $table->integer('expiration')->index();
         });
     }
 

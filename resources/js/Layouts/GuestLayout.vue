@@ -1,22 +1,15 @@
 <script setup>
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link } from '@inertiajs/vue3'
 </script>
 
 <template>
-    <div
-        class="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0"
-    >
-        <div>
-            <Link href="/">
-                <ApplicationLogo class="h-20 w-20 fill-current text-gray-500" />
-            </Link>
-        </div>
-
-        <div
-            class="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg"
-        >
-            <slot />
-        </div>
+  <div class="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-green-100 to-green-50 px-4 py-8">
+    <Link href="/" class="mb-6 flex items-center gap-3">
+      <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-green-700 text-2xl text-white">♻</span>
+      <span><b class="block text-xl leading-tight text-green-900">SIRKULA</b><small class="text-gray-500">Bank Sampah Sirkular</small></span>
+    </Link>
+    <div class="w-full overflow-hidden rounded-2xl bg-white px-6 py-6 shadow-lg ring-1 ring-green-100 sm:max-w-md">
+      <slot />
     </div>
+  </div>
 </template>

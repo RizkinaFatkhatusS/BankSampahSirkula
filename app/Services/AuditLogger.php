@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\LogAudit;
+
+class AuditLogger
+{
+    public static function catat(string $entitas, int $entitasId, string $aksi, mixed $sebelum = null, mixed $sesudah = null): void
+    {
+        LogAudit::create([
+            'entitas' => $entitas,
+            'entitas_id' => $entitasId,
+            'user_id' => auth()->id(),
+            'aksi' => $aksi,
+            'nilai_sebelum' => $sebelum === null ? null : json_encode($sebelum),
+            'nilai_sesudah' => $sesudah === null ? null : json_encode($sesudah),
+        ]);
+    }
+}

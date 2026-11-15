@@ -1,9 +1,14 @@
 <?php
 
+use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,14 +18,29 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\HandleInertiaRequests::class,
-            \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            HandleInertiaRequests::class,
+            AddLinkHeadersForPreloadedAssets::class,
         ]);
 
-        //
+        // Alias "role" dipakai di routes/web.php: ->middleware('role:customer')
+        $middleware->alias(['role' => EnsureRole::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*') || $request->expectsJson(),
         );
+
+        // Halaman error berbahasa Indonesia (403/404/419/500) lewat Inertia
+        $exceptions->respond(function (Response $response, Throwable $e, Request $request) {
+            if (! app()->environment(['local', 'testing']) && in_array($response->getStatusCode(), [403, 404, 500, 503], true)) {
+                return Inertia::render('Error', ['status' => $response->getStatusCode()])
+                    ->toResponse($request)->setStatusCode($response->getStatusCode());
+            }
+
+            if ($response->getStatusCode() === 419) {
+                return back()->with('error', 'Sesi habis. Silakan coba lagi.');
+            }
+
+            return $response;
+        });
     })->create();

@@ -6,23 +6,17 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('mitra', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('bank_sampah_id')->constrained('bank_sampah')->onDelete('cascade');
-        $table->string('nama');
-        $table->string('kontak'); // WhatsApp atau Telepon
-        $table->timestamps();
+            $table->id();
+            $table->foreignId('bank_sampah_id')->constrained('bank_sampah')->cascadeOnDelete();
+            $table->string('nama');
+            $table->string('kontak', 30); // WhatsApp atau telepon
+            $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('mitra');

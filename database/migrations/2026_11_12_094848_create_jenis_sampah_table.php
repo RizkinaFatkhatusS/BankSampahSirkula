@@ -6,25 +6,21 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('jenis_sampah', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('bank_sampah_id')->constrained('bank_sampah')->onDelete('cascade');
-            $table->string('nama'); // Contoh: Plastik, Kertas, Organik, Logam
+            $table->foreignId('bank_sampah_id')->constrained('bank_sampah')->cascadeOnDelete();
+            $table->string('nama');
+            $table->string('ikon', 16)->default('♻️');
             $table->enum('kategori', ['organik', 'anorganik']);
-            $table->decimal('harga_per_kg', 10, 2); // Menggunakan decimal sesuai aturan teknis
+            $table->decimal('harga_per_kg', 12, 2);
             $table->date('berlaku_sejak')->nullable();
+            $table->boolean('aktif')->default(true);
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('jenis_sampah');

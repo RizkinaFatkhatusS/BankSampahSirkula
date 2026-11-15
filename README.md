@@ -1,58 +1,39 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SIRKULA — Website Bank Sampah Sirkular
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Satu aplikasi **Laravel** (backend, routing, database, autentikasi) dengan **Vue 3** sebagai lapisan tampilan
+melalui **Inertia.js**, dan **Tailwind CSS** untuk gaya. Tidak ada server/API kedua: Laravel yang melayani
+semua halaman, Vue hanya merender komponen di `resources/js/Pages`.
 
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Menjalankan (Windows / WAMP)
 
 ```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+composer install
+composer require maatwebsite/excel barryvdh/laravel-dompdf   # laporan Excel & PDF
+npm install
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+1. Buat database MySQL kosong bernama `bank_sampah_sirkula` (sesuai `.env`).
+2. Jalankan:
+```bash
+php artisan key:generate        # hanya jika APP_KEY di .env kosong
+php artisan migrate:fresh --seed
+php artisan storage:link
+composer dev                    # php artisan serve + vite
+```
+3. Buka http://localhost:8000
 
-## Contributing
+Produksi: `npm run build` (jangan biarkan file `public/hot` tertinggal).
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Akun contoh (kata sandi: `password`)
+| Role | Email |
+|---|---|
+| Supplier (data lengkap) | supplier@sirkula.test |
+| Supplier lain | supplier2@sirkula.test, supplier3@sirkula.test |
+| Customer | customer@sirkula.test, budi@sirkula.test |
 
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Struktur
+- `app/Services/SetoranService.php` — estimasi, nilai final, saldo, pencairan (dalam DB transaction)
+- `app/Policies/SetoranPolicy.php` + middleware `role:` — hak akses
+- `app/Http/Controllers/{Customer,Supplier}` — controller per peran
+- `resources/js/Pages/{Customer,Supplier}` — halaman Vue
+- `tests/Feature/PenimbanganTest.php` — uji nilai final, saldo, dan hak akses (`php artisan test`)

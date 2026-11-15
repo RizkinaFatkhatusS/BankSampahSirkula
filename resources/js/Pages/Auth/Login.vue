@@ -1,100 +1,38 @@
 <script setup>
-import Checkbox from '@/Components/Checkbox.vue';
-import GuestLayout from '@/Layouts/GuestLayout.vue';
-import InputError from '@/Components/InputError.vue';
-import InputLabel from '@/Components/InputLabel.vue';
-import PrimaryButton from '@/Components/PrimaryButton.vue';
-import TextInput from '@/Components/TextInput.vue';
-import { Head, Link, useForm } from '@inertiajs/vue3';
+import GuestLayout from '@/Layouts/GuestLayout.vue'
+import Field from '@/Components/Field.vue'
+import { Head, Link, useForm } from '@inertiajs/vue3'
 
-defineProps({
-    canResetPassword: {
-        type: Boolean,
-    },
-    status: {
-        type: String,
-    },
-});
+defineProps({ canResetPassword: Boolean, status: String })
 
-const form = useForm({
-    email: '',
-    password: '',
-    remember: false,
-});
-
-const submit = () => {
-    form.post(route('login'), {
-        onFinish: () => form.reset('password'),
-    });
-};
+const form = useForm({ email: '', password: '', remember: false })
+const submit = () => form.post(route('login'), { onFinish: () => form.reset('password') })
 </script>
 
 <template>
-    <GuestLayout>
-        <Head title="Log in" />
+  <GuestLayout>
+    <Head title="Masuk" />
+    <h2 class="text-xl font-bold text-green-900">Masuk ke SIRKULA</h2>
+    <p class="mb-5 text-sm text-gray-500">Customer dan Supplier masuk lewat halaman yang sama.</p>
 
-        <div v-if="status" class="mb-4 text-sm font-medium text-green-600">
-            {{ status }}
-        </div>
+    <div v-if="status" class="mb-4 rounded-xl bg-green-50 p-3 text-sm font-medium text-green-700">{{ status }}</div>
 
-        <form @submit.prevent="submit">
-            <div>
-                <InputLabel for="email" value="Email" />
+    <form class="space-y-4" @submit.prevent="submit">
+      <Field label="Email" :error="form.errors.email">
+        <input v-model="form.email" type="email" class="input" required autofocus autocomplete="username" placeholder="nama@email.com" />
+      </Field>
+      <Field label="Kata sandi" :error="form.errors.password">
+        <input v-model="form.password" type="password" class="input" required autocomplete="current-password" />
+      </Field>
+      <div class="flex items-center justify-between">
+        <label class="flex items-center gap-2 text-sm text-gray-600">
+          <input v-model="form.remember" type="checkbox" class="rounded border-green-300 text-green-700 focus:ring-green-600" /> Ingat saya
+        </label>
+        <Link v-if="canResetPassword" :href="route('password.request')" class="text-sm font-medium text-green-700 hover:underline">Lupa kata sandi?</Link>
+      </div>
+      <button class="btn btn-primary w-full" :disabled="form.processing">Masuk</button>
+    </form>
 
-                <TextInput
-                    id="email"
-                    type="email"
-                    class="mt-1 block w-full"
-                    v-model="form.email"
-                    required
-                    autofocus
-                    autocomplete="username"
-                />
-
-                <InputError class="mt-2" :message="form.errors.email" />
-            </div>
-
-            <div class="mt-4">
-                <InputLabel for="password" value="Password" />
-
-                <TextInput
-                    id="password"
-                    type="password"
-                    class="mt-1 block w-full"
-                    v-model="form.password"
-                    required
-                    autocomplete="current-password"
-                />
-
-                <InputError class="mt-2" :message="form.errors.password" />
-            </div>
-
-            <div class="mt-4 block">
-                <label class="flex items-center">
-                    <Checkbox name="remember" v-model:checked="form.remember" />
-                    <span class="ms-2 text-sm text-gray-600"
-                        >Remember me</span
-                    >
-                </label>
-            </div>
-
-            <div class="mt-4 flex items-center justify-end">
-                <Link
-                    v-if="canResetPassword"
-                    :href="route('password.request')"
-                    class="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                >
-                    Forgot your password?
-                </Link>
-
-                <PrimaryButton
-                    class="ms-4"
-                    :class="{ 'opacity-25': form.processing }"
-                    :disabled="form.processing"
-                >
-                    Log in
-                </PrimaryButton>
-            </div>
-        </form>
-    </GuestLayout>
+    <p class="mt-5 text-center text-sm text-gray-500">Belum punya akun? <Link :href="route('register')" class="font-semibold text-green-700 hover:underline">Daftar sebagai Customer</Link></p>
+  </GuestLayout>
 </template>

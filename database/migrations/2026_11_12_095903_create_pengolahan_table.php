@@ -6,26 +6,28 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('pengolahan', function (Blueprint $table) {
-           $table->id();
-            $table->foreignId('bank_sampah_id')->constrained('bank_sampah')->onDelete('cascade');
-            $table->string('kategori_sampah');
-            $table->string('jenis_olahan'); // Contoh: Pupuk cair, kerajinan, dll
+            $table->id();
+            $table->foreignId('bank_sampah_id')->constrained('bank_sampah')->cascadeOnDelete();
+            $table->enum('kategori_sampah', ['organik', 'anorganik']);
+            $table->enum('jenis_olahan', ['pupuk_cair', 'kerajinan', 'energi_lain']);
+            $table->decimal('berat_diolah', 10, 2)->nullable();
             $table->date('tanggal');
             $table->text('catatan')->nullable();
             $table->string('foto_dokumentasi')->nullable();
             $table->timestamps();
         });
+
+        // Penelusuran: setoran asal yang diolah
+        Schema::create('pengolahan_setoran', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('pengolahan_id')->constrained('pengolahan')->cascadeOnDelete();
+            $table->foreignId('setoran_id')->constrained('setoran')->cascadeOnDelete();
+        });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('pengolahan');
