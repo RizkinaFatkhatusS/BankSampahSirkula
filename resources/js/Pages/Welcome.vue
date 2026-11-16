@@ -22,8 +22,11 @@ const langkah = [
         <template v-else>
           <Link v-if="canLogin" :href="route('login')" class="btn btn-primary px-6 py-3">Masuk</Link>
           <Link v-if="canRegister" :href="route('register')" class="btn btn-outline px-6 py-3">Daftar Customer</Link>
+          <Link :href="route('pengajuan.daftar')" class="btn btn-outline px-6 py-3">Daftar sebagai Supplier</Link>
         </template>
       </div>
+
+      <p v-if="!$page.props.auth.user" class="mt-4 text-sm text-gray-500">Sudah mengajukan pendaftaran bank sampah? <Link :href="route('pengajuan.cek')" class="font-semibold text-green-700 hover:underline">Cek status pengajuan</Link></p>
 
       <div class="mt-14 grid w-full gap-4 text-left sm:grid-cols-2 lg:grid-cols-4">
         <div v-for="(l, i) in langkah" :key="i" class="card">

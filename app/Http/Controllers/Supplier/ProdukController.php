@@ -26,7 +26,7 @@ class ProdukController extends BaseController
             'jumlah' => ['required', 'numeric', 'min:0'],
             'satuan' => ['required', 'string', 'max:20'],
             'harga_jual' => ['required', 'numeric', 'min:0'],
-            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:'.\App\Services\Pengaturan::maksKb()],
         ]);
 
         if ($request->hasFile('foto')) {

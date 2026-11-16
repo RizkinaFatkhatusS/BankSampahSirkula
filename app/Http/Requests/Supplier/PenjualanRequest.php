@@ -19,7 +19,7 @@ class PenjualanRequest extends FormRequest
             'tanggal' => ['required', 'date'],
             'status_pengiriman' => ['required', 'in:diproses,dikirim,diterima'],
             'catatan' => ['nullable', 'string', 'max:500'],
-            'bukti_pembayaran' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'bukti_pembayaran' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:'.\App\Services\Pengaturan::maksKb()],
             'items' => ['required', 'array', 'min:1'],
             'items.*.produk_olahan_id' => ['required', 'integer', 'distinct'],
             'items.*.jumlah' => ['required', 'numeric', 'gt:0'],

@@ -96,7 +96,7 @@ class PenjualanController extends BaseController
         $model = Penjualan::where('bank_sampah_id', $this->bankId())->findOrFail($penjualan);
         $data = $request->validate([
             'status_pengiriman' => ['required', 'in:diproses,dikirim,diterima'],
-            'bukti_pembayaran' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'bukti_pembayaran' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:'.\App\Services\Pengaturan::maksKb()],
         ]);
 
         if ($request->hasFile('bukti_pembayaran')) {

@@ -16,6 +16,12 @@ class Setoran extends Model
     /** Status yang masih boleh dibatalkan / ditolak (sebelum sampah diterima) */
     public const STATUS_SEBELUM_DITERIMA = ['diajukan', 'disetujui', 'menunggu_penjemputan', 'dalam_penjemputan'];
 
+    /** Status yang masih boleh dibatalkan Customer (termasuk Ditunda saat bank sampah ditangguhkan) */
+    public const STATUS_BISA_DIBATALKAN = ['diajukan', 'disetujui', 'menunggu_penjemputan', 'dalam_penjemputan', 'ditunda'];
+
+    /** Setoran yang belum final (belum selesai/batal/tolak) */
+    public const STATUS_BELUM_FINAL = ['diajukan', 'disetujui', 'menunggu_penjemputan', 'dalam_penjemputan', 'diterima', 'ditimbang', 'ditunda'];
+
     protected function casts(): array
     {
         return [
@@ -53,6 +59,6 @@ class Setoran extends Model
 
     public function bisaDibatalkan(): bool
     {
-        return in_array($this->status, self::STATUS_SEBELUM_DITERIMA, true);
+        return in_array($this->status, self::STATUS_BISA_DIBATALKAN, true);
     }
 }

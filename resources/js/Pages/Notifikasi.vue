@@ -4,12 +4,12 @@ import AppLayout from '@/Layouts/AppLayout.vue'
 import EmptyState from '@/Components/EmptyState.vue'
 
 const props = defineProps({ notifikasi: Array, role: String })
-const prefix = props.role === 'supplier' ? 'supplier' : 'customer'
+const prefix = ['admin', 'super_admin'].includes(props.role) ? 'admin' : props.role === 'supplier' ? 'supplier' : 'customer'
 const ikon = { sukses: '✅', peringatan: '⚠️', info: '🔔' }
 
 const baca = (n) => !n.dibaca && router.post(route(`${prefix}.notifikasi.baca`, n.id), {}, { preserveScroll: true })
 const bacaSemua = () => router.post(route(`${prefix}.notifikasi.baca-semua`), {}, { preserveScroll: true })
-const tautan = (n) => n.setoran_id ? route(prefix === 'supplier' ? 'supplier.setoran.show' : 'customer.setoran.show', n.setoran_id) : null
+const tautan = (n) => n.url ? n.url : n.setoran_id ? route(prefix === 'supplier' ? 'supplier.setoran.show' : 'customer.setoran.show', n.setoran_id) : null
 </script>
 
 <template>
@@ -27,7 +27,7 @@ const tautan = (n) => n.setoran_id ? route(prefix === 'supplier' ? 'supplier.set
             <p class="text-sm text-gray-600">{{ n.pesan }}</p>
             <div class="mt-1 flex items-center gap-3 text-xs text-gray-400">
               {{ n.waktu }}
-              <Link v-if="tautan(n)" :href="tautan(n)" class="font-semibold text-green-700 hover:underline" @click="baca(n)">Lihat setoran</Link>
+              <Link v-if="tautan(n)" :href="tautan(n)" class="font-semibold text-green-700 hover:underline" @click="baca(n)">{{ n.url ? 'Buka' : 'Lihat setoran' }}</Link>
               <button v-if="!n.dibaca" class="font-semibold text-gray-500 hover:underline" @click="baca(n)">Tandai dibaca</button>
             </div>
           </div>

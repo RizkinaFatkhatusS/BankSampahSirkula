@@ -7,6 +7,9 @@ defineProps({ title: { type: String, default: 'SIRKULA' } })
 const page = usePage()
 const user = computed(() => page.props.auth.user)
 const isSupplier = computed(() => user.value?.role === 'supplier')
+const isStaf = computed(() => ['admin', 'super_admin'].includes(user.value?.role))
+const izin = computed(() => user.value?.izin ?? [])
+const terbatas = computed(() => page.props.akunTerbatas)
 const notifCount = computed(() => page.props.notifBelumDibaca ?? 0)
 const flash = computed(() => page.props.flash ?? {})
 
@@ -30,11 +33,41 @@ const menuSupplier = [
   { label: 'Laporan', route: 'supplier.laporan.index', match: 'supplier.laporan.*', icon: '📑' },
   { label: 'Profil Bank', route: 'supplier.profil', match: 'supplier.profil', icon: '🏢' },
 ]
-const menus = computed(() => (isSupplier.value ? menuSupplier : menuCustomer))
-const menuMobile = computed(() => (isSupplier.value ? menuSupplier.filter((m) => m.utama) : menuCustomer))
-const menuLainnya = computed(() => (isSupplier.value ? menuSupplier.filter((m) => !m.utama) : []))
+// Menu Admin hanya menampilkan tugas yang diizinkan role-nya. Pemeriksaan sesungguhnya tetap di server.
+const menuAdmin = [
+  { label: 'Beranda', route: 'admin.beranda', match: 'admin.beranda', icon: '🏠' },
+  { label: 'Pengajuan', route: 'admin.pengajuan.index', match: 'admin.pengajuan.*', icon: '📝', izin: 'pengajuan.lihat' },
+  { label: 'Supplier', route: 'admin.supplier.index', match: 'admin.supplier.*', icon: '🏢', izin: 'supplier.lihat' },
+  { label: 'Customer', route: 'admin.customer.index', match: 'admin.customer.*', icon: '👥', izin: 'customer.lihat' },
+  { label: 'Bank Sampah', route: 'admin.bank.index', match: 'admin.bank.*', icon: '📍', izin: 'banksampah.lihat' },
+  { label: 'Saldo Belum Dicairkan', route: 'admin.saldo.index', match: 'admin.saldo.*', icon: '💰', izin: 'banksampah.saldo' },
+  { label: 'Data Master', route: 'admin.master.index', match: 'admin.master.*', icon: '🗂️', izin: 'master.lihat' },
+  { label: 'Dashboard', route: 'admin.dashboard', match: 'admin.dashboard', icon: '📊', izin: 'dashboard.lihat' },
+  { label: 'Laporan', route: 'admin.laporan.index', match: 'admin.laporan.*', icon: '📑', izin: 'laporan.unduh' },
+  { label: 'Log Audit', route: 'admin.log-audit', match: 'admin.log-audit', icon: '🔍', izin: 'audit.lihat' },
+  { label: 'Log Email', route: 'admin.log-email', match: 'admin.log-email*', icon: '✉️', izin: 'email.kelola' },
+  { label: 'Akun Admin', route: 'superadmin.admin.index', match: 'superadmin.admin.*', icon: '🛡️', izin: 'admin.kelola', grup: 'Manajemen Akses' },
+  { label: 'Manajemen Role', route: 'superadmin.role.index', match: 'superadmin.role.*', icon: '🔑', izin: 'role.kelola', grup: 'Manajemen Akses' },
+  { label: 'Pengaturan Sistem', route: 'superadmin.pengaturan', match: 'superadmin.pengaturan*', icon: '⚙️', izin: 'sistem.atur', grup: 'Manajemen Akses' },
+  { label: 'Log Akses', route: 'superadmin.log-akses', match: 'superadmin.log-akses', icon: '🧾', izin: 'akses.log', grup: 'Manajemen Akses' },
+]
+// Supplier Dalam penyelesaian: hanya fitur terbatas (FR-50)
+const ruteTerbatas = ['supplier.beranda', 'supplier.setoran.index', 'supplier.pencairan.index', 'supplier.laporan.index']
+const menus = computed(() => {
+  if (isStaf.value) return menuAdmin.filter((m) => !m.izin || izin.value.includes(m.izin))
+  if (isSupplier.value) return terbatas.value ? menuSupplier.filter((m) => ruteTerbatas.includes(m.route)) : menuSupplier
+  return menuCustomer
+})
+const menuMobile = computed(() => (isStaf.value ? menus.value.slice(0, 4) : isSupplier.value && !terbatas.value ? menuSupplier.filter((m) => m.utama) : menus.value))
+const menuLainnya = computed(() => (isStaf.value ? menus.value.slice(4) : isSupplier.value && !terbatas.value ? menuSupplier.filter((m) => !m.utama) : []))
+const grupMenu = computed(() => {
+  const g = {}
+  menus.value.forEach((m) => (g[m.grup ?? ''] ??= []).push(m))
+  return Object.entries(g)
+})
 const active = (m) => route().current(m)
-const rutaNotif = computed(() => route(isSupplier.value ? 'supplier.notifikasi' : 'customer.notifikasi'))
+const rutaNotif = computed(() => route(isStaf.value ? 'admin.notifikasi' : isSupplier.value ? 'supplier.notifikasi' : 'customer.notifikasi'))
+const labelRole = computed(() => ({ customer: 'Customer', supplier: 'Supplier', admin: 'Admin', super_admin: 'Super Admin' })[user.value?.role] ?? '')
 const tanggal = new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 
 const sheet = ref(false)
@@ -61,20 +94,22 @@ watch(
         <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-green-700 text-xl text-white">♻</span>
         <span><b class="block leading-tight text-green-900">SIRKULA</b><small class="text-gray-500">Bank Sampah Sirkular</small></span>
       </Link>
-      <p class="mb-2 mt-6 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ isSupplier ? 'Menu Supplier' : 'Menu Customer' }}</p>
-      <nav class="space-y-1">
-        <Link v-for="m in menus" :key="m.route" :href="route(m.route)"
-          class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition"
-          :class="active(m.match) ? 'bg-green-700 text-white shadow' : 'text-gray-600 hover:bg-green-50'">
-          <span>{{ m.icon }}</span>{{ m.label }}
-        </Link>
-      </nav>
+      <template v-for="[grup, items] in grupMenu" :key="grup">
+        <p class="mb-2 mt-6 px-3 text-xs font-semibold uppercase tracking-wide text-gray-400">{{ grup || (isStaf ? 'Menu ' + labelRole : isSupplier ? 'Menu Supplier' : 'Menu Customer') }}</p>
+        <nav class="space-y-1">
+          <Link v-for="m in items" :key="m.route" :href="route(m.route)"
+            class="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition"
+            :class="active(m.match) ? 'bg-green-700 text-white shadow' : 'text-gray-600 hover:bg-green-50'">
+            <span>{{ m.icon }}</span>{{ m.label }}
+          </Link>
+        </nav>
+      </template>
       <div class="mt-auto pt-6">
         <Link :href="route('profile.edit')" class="flex items-center gap-3 rounded-xl bg-green-50 p-3 hover:bg-green-100">
           <span class="flex h-9 w-9 items-center justify-center rounded-full bg-green-700 font-bold text-white">{{ user.nama?.[0] }}</span>
           <div class="min-w-0 flex-1">
             <p class="truncate text-sm font-semibold">{{ user.nama }}</p>
-            <p class="text-xs capitalize text-gray-500">{{ user.role }}</p>
+            <p class="text-xs text-gray-500">{{ labelRole }}</p>
           </div>
         </Link>
         <Link :href="route('logout')" method="post" as="button" class="mt-2 w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-red-600 hover:bg-red-50">Keluar</Link>
@@ -105,6 +140,9 @@ watch(
         </div>
       </transition>
 
+      <div v-if="terbatas" class="border-b border-orange-200 bg-orange-50 px-4 py-2.5 text-center text-sm text-orange-900 md:px-8">
+        Akun Anda <b>dalam penyelesaian</b>. Fitur dibatasi: menimbang setoran yang sudah diterima, mencatat pencairan saldo, dan mengunduh laporan<span v-if="terbatas.batas"> hingga {{ terbatas.batas }}</span>.
+      </div>
       <main class="mx-auto max-w-6xl p-4 md:p-8"><slot /></main>
     </div>
 

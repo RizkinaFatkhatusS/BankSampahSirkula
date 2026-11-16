@@ -19,6 +19,7 @@ const alur = computed(() => {
 const urutan = computed(() => alur.value.map((a) => a[0]))
 const posisi = computed(() => urutan.value.indexOf(props.setoran.status === 'ditimbang' ? 'selesai' : props.setoran.status))
 const berhenti = computed(() => ['dibatalkan', 'ditolak'].includes(props.setoran.status))
+const ditunda = computed(() => props.setoran.status === 'ditunda')
 
 const konfirmasi = ref(false)
 const proses = ref(false)
@@ -38,6 +39,9 @@ const batal = () => router.post(route('customer.setoran.batal', props.setoran.id
       <div v-if="berhenti" class="rounded-2xl p-4 text-sm" :class="setoran.status === 'ditolak' ? 'bg-red-50 text-red-800' : 'bg-gray-100 text-gray-700'">
         <b>{{ setoran.status === 'ditolak' ? 'Setoran ditolak bank sampah.' : 'Setoran dibatalkan.' }}</b>
         <span v-if="setoran.alasan_penolakan"> Alasan: {{ setoran.alasan_penolakan }}</span>
+      </div>
+      <div v-else-if="ditunda" class="rounded-2xl bg-yellow-50 p-4 text-sm text-yellow-900">
+        <b>Setoran ditunda.</b> Bank sampah sedang ditangguhkan sementara. Setoran akan dilanjutkan bila bank sampah dipulihkan, atau Anda dapat membatalkannya. Setoran yang tertunda terlalu lama dibatalkan otomatis.
       </div>
       <ol v-else class="card space-y-3">
         <li v-for="(a, i) in alur" :key="a[0]" class="flex items-center gap-3">

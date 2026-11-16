@@ -1,6 +1,8 @@
 <?php
 
+use App\Http\Middleware\AkunAktif;
 use App\Http\Middleware\EnsureRole;
+use App\Http\Middleware\PerluIzin;
 use App\Http\Middleware\HandleInertiaRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,10 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            AkunAktif::class,
         ]);
 
         // Alias "role" dipakai di routes/web.php: ->middleware('role:customer')
-        $middleware->alias(['role' => EnsureRole::class]);
+        $middleware->alias(['role' => EnsureRole::class, 'izin' => PerluIzin::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

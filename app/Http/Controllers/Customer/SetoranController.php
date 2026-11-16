@@ -19,10 +19,10 @@ class SetoranController extends Controller
     /** Form bertahap. Bank sampah dipilih lebih dulu dari halaman pencarian (?bank=ID). */
     public function create(Request $request)
     {
-        $bank = BankSampah::find($request->query('bank'));
+        $bank = BankSampah::tampil()->find($request->query('bank'));
 
         if (! $bank) {
-            return redirect()->route('customer.bank.index')->with('error', 'Pilih bank sampah terlebih dahulu.');
+            return redirect()->route('customer.bank.index')->with('error', 'Pilih bank sampah terlebih dahulu. Bank sampah yang dipilih sedang tidak menerima setoran.');
         }
 
         $lat = is_numeric($request->query('lat')) ? (float) $request->query('lat') : null;
@@ -31,7 +31,7 @@ class SetoranController extends Controller
         // Bank sampah terdekat dari posisi Customer untuk info "Antar Sendiri" (OI-03): bisa berbeda dari bank terpilih.
         $terdekat = null;
         if ($lat !== null && $lng !== null) {
-            $terdekat = BankSampah::all()
+            $terdekat = BankSampah::tampil()->get()
                 ->map(fn ($b) => ['b' => $b, 'jarak' => BankSampah::jarakKm($lat, $lng, $b->latitude, $b->longitude)])
                 ->sortBy('jarak')->first();
         }

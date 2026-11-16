@@ -18,7 +18,7 @@ class StoreSetoranRequest extends FormRequest
             'jenis_sampah_ids' => ['required', 'array', 'min:1'],
             'jenis_sampah_ids.*' => ['integer', 'distinct'],
             // Foto wajib (PRD FR-07): jpg/jpeg/png, maksimal 2 MB
-            'foto_bukti' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'foto_bukti' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:'.\App\Services\Pengaturan::maksKb()],
             'metode_penyerahan' => ['required', 'in:dijemput_kurir,antar_sendiri'],
             'alamat_jemput' => ['required_if:metode_penyerahan,dijemput_kurir', 'nullable', 'string', 'max:500'],
             'jadwal_jemput' => ['required_if:metode_penyerahan,dijemput_kurir', 'nullable', 'string', 'max:100'],

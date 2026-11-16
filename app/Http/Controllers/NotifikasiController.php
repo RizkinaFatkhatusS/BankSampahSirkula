@@ -16,6 +16,7 @@ class NotifikasiController extends Controller
             'pesan' => $n->data['pesan'] ?? '',
             'tipe' => $n->data['tipe'] ?? 'info',
             'setoran_id' => $n->data['setoran_id'] ?? null,
+            'url' => $n->data['url'] ?? null,
             'dibaca' => $n->read_at !== null,
             'waktu' => $n->created_at->diffForHumans(),
         ]);

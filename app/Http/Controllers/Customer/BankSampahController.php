@@ -17,7 +17,7 @@ class BankSampahController extends Controller
         $lat = is_numeric($request->query('lat')) ? (float) $request->query('lat') : null;
         $lng = is_numeric($request->query('lng')) ? (float) $request->query('lng') : null;
 
-        $banks = BankSampah::with(['jenisSampah' => fn ($j) => $j->where('aktif', true)])
+        $banks = BankSampah::tampil()->with(['jenisSampah' => fn ($j) => $j->where('aktif', true)])
             ->when($q !== '', fn ($b) => $b->where(fn ($w) => $w->where('nama', 'like', "%{$q}%")->orWhere('alamat', 'like', "%{$q}%")))
             ->when(in_array($filter, ['organik', 'anorganik'], true),
                 fn ($b) => $b->whereHas('jenisSampah', fn ($j) => $j->where('aktif', true)->where('kategori', $filter)))
@@ -47,6 +47,8 @@ class BankSampahController extends Controller
 
     public function show(Request $request, BankSampah $bank)
     {
+        abort_unless(BankSampah::tampil()->whereKey($bank->id)->exists(), 404);
+
         $lat = is_numeric($request->query('lat')) ? (float) $request->query('lat') : null;
         $lng = is_numeric($request->query('lng')) ? (float) $request->query('lng') : null;
 

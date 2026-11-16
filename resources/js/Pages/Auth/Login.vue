@@ -13,7 +13,7 @@ const submit = () => form.post(route('login'), { onFinish: () => form.reset('pas
   <GuestLayout>
     <Head title="Masuk" />
     <h2 class="text-xl font-bold text-green-900">Masuk ke SIRKULA</h2>
-    <p class="mb-5 text-sm text-gray-500">Customer dan Supplier masuk lewat halaman yang sama.</p>
+    <p class="mb-5 text-sm text-gray-500">Customer, Supplier, dan Admin masuk lewat halaman yang sama.</p>
 
     <div v-if="status" class="mb-4 rounded-xl bg-green-50 p-3 text-sm font-medium text-green-700">{{ status }}</div>
 
@@ -34,5 +34,6 @@ const submit = () => form.post(route('login'), { onFinish: () => form.reset('pas
     </form>
 
     <p class="mt-5 text-center text-sm text-gray-500">Belum punya akun? <Link :href="route('register')" class="font-semibold text-green-700 hover:underline">Daftar sebagai Customer</Link></p>
+    <p class="mt-2 text-center text-sm text-gray-500">Pengelola bank sampah? <Link :href="route('pengajuan.daftar')" class="font-semibold text-green-700 hover:underline">Daftar sebagai Supplier</Link> · <Link :href="route('pengajuan.cek')" class="font-semibold text-green-700 hover:underline">Cek status pengajuan</Link></p>
   </GuestLayout>
 </template>

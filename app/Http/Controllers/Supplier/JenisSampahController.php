@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Supplier;
 
 use App\Models\JenisSampah;
+use App\Models\MasterKategori;
+use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -13,7 +15,7 @@ class JenisSampahController extends BaseController
         return [
             'nama' => ['required', 'string', 'max:100'],
             'ikon' => ['nullable', 'string', 'max:8'],
-            'kategori' => ['required', 'in:organik,anorganik'],
+            'kategori' => ['required', Rule::in(array_keys(MasterKategori::daftar('kategori_sampah')))],
             'harga_per_kg' => ['required', 'numeric', 'min:0', 'max:99999999'],
             'aktif' => ['boolean'],
         ];

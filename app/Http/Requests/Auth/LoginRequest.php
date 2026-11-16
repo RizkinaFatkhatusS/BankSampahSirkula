@@ -2,29 +2,22 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Models\LogAkses;
+use App\Models\User;
 use Illuminate\Auth\Events\Lockout;
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class LoginRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
@@ -34,33 +27,46 @@ class LoginRequest extends FormRequest
     }
 
     /**
-     * Attempt to authenticate the request's credentials.
-     *
-     * @throws ValidationException
+     * Memeriksa email dan kata sandi, lalu status akun. Pesan status akun (ditangguhkan, nonaktif, dst.)
+     * baru ditampilkan setelah kata sandi benar agar email terdaftar tidak bocor (FR-02).
+     * Mengembalikan pengguna; proses login sesungguhnya dilakukan controller (2FA bisa menyusul).
      */
-    public function authenticate(): void
+    public function authenticate(): User
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            RateLimiter::hit($this->throttleKey());
+        $user = User::where('email', $this->string('email')->lower()->toString())->first();
 
-            throw ValidationException::withMessages([
-                'email' => trans('auth.failed'),
-            ]);
+        if (! $user || ! $user->password || ! Hash::check($this->string('password')->toString(), $user->password)) {
+            RateLimiter::hit($this->throttleKey(), 60);
+            LogAkses::catat('login_gagal', ['email' => $this->string('email')->toString()]);
+
+            throw ValidationException::withMessages(['email' => trans('auth.failed')]);
+        }
+
+        if ($pesan = $user->pesanStatusLogin()) {
+            RateLimiter::hit($this->throttleKey(), 60);
+            LogAkses::catat('login_gagal', ['email' => $user->email, 'alasan' => $user->status_akun], $user->id);
+
+            throw ValidationException::withMessages(['email' => $pesan]);
         }
 
         RateLimiter::clear($this->throttleKey());
+
+        return $user;
     }
 
-    /**
-     * Ensure the login request is not rate limited.
-     *
-     * @throws ValidationException
-     */
+    /** Admin dan Super Admin dibatasi lebih ketat (3 percobaan), pengguna lain 5. */
+    private function maksPercobaan(): int
+    {
+        $role = User::where('email', $this->string('email')->lower()->toString())->value('role');
+
+        return in_array($role, [User::ROLE_ADMIN, User::ROLE_SUPER_ADMIN], true) ? 3 : 5;
+    }
+
     public function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), $this->maksPercobaan())) {
             return;
         }
 
@@ -69,16 +75,10 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => trans('auth.throttle', [
-                'seconds' => $seconds,
-                'minutes' => ceil($seconds / 60),
-            ]),
+            'email' => trans('auth.throttle', ['seconds' => $seconds, 'minutes' => ceil($seconds / 60)]),
         ]);
     }
 
-    /**
-     * Get the rate limiting throttle key for the request.
-     */
     public function throttleKey(): string
     {
         return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());

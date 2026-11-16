@@ -27,7 +27,7 @@ class ProfilController extends BaseController
             'longitude' => ['required', 'numeric', 'between:-180,180'],
             'nomor_kontak' => ['required', 'string', 'max:30'],
             'jam_operasional' => ['required', 'string', 'max:100'],
-            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'foto' => ['nullable', 'file', 'mimes:jpg,jpeg,png', 'max:'.\App\Services\Pengaturan::maksKb()],
         ]);
 
         $bank = $this->bank();

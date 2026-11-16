@@ -6,7 +6,7 @@ import StatusBadge from '@/Components/StatusBadge.vue'
 import EmptyState from '@/Components/EmptyState.vue'
 import { rp, kg } from '@/utils'
 
-defineProps({ saldo: Number, totalBerat: Number, totalSetoran: Number, setoranAktif: Number, riwayat: Array })
+defineProps({ saldo: Number, saldoBank: { type: Array, default: () => [] }, totalBerat: Number, totalSetoran: Number, setoranAktif: Number, riwayat: Array })
 const nama = computed(() => usePage().props.auth.user.nama)
 </script>
 
@@ -22,13 +22,27 @@ const nama = computed(() => usePage().props.auth.user.nama)
         <div class="card">
           <p class="text-sm font-medium text-gray-500">Saldo Tabungan</p>
           <p class="mt-1 text-3xl font-extrabold text-green-800">{{ rp(saldo) }}</p>
-          <p class="mt-1 text-xs text-gray-500">Saldo bertambah dari nilai final setelah sampah ditimbang.</p>
+          <p class="mt-1 text-xs text-gray-500">Total dari seluruh bank sampah. Saldo bertambah dari nilai final setelah sampah ditimbang.</p>
         </div>
         <div class="card">
           <p class="text-sm font-medium text-gray-500">Total Berat Setoran</p>
           <p class="mt-1 text-3xl font-extrabold text-green-800">{{ kg(totalBerat) }}</p>
           <p class="mt-1 text-xs text-gray-500">{{ totalSetoran }} setoran · {{ setoranAktif }} sedang diproses</p>
         </div>
+      </div>
+
+      <div v-if="saldoBank.length" class="card">
+        <h3 class="mb-3 font-bold text-green-900">Saldo per bank sampah</h3>
+        <ul class="divide-y divide-green-50">
+          <li v-for="b in saldoBank" :key="b.bank_id" class="flex items-start justify-between gap-3 py-3">
+            <div class="min-w-0">
+              <p class="font-semibold">{{ b.bank }}</p>
+              <p v-if="b.tidak_aktif" class="text-xs text-amber-700">Bank sampah ini sedang tidak aktif<span v-if="b.status_akun"> ({{ { ditangguhkan: 'ditangguhkan', dalam_penyelesaian: 'dalam penyelesaian', nonaktif: 'nonaktif', menunggu_aktivasi: 'belum aktif' }[b.status_akun] ?? b.status_akun }})</span>. Saldo Anda tetap tercatat. Hubungi {{ b.kontak }} untuk pencairan.</p>
+              <p v-else class="text-xs text-gray-400">Dicairkan melalui bank sampah ini.</p>
+            </div>
+            <p class="shrink-0 font-bold text-green-800">{{ rp(b.saldo) }}</p>
+          </li>
+        </ul>
       </div>
 
       <div class="flex flex-col items-start justify-between gap-4 rounded-2xl bg-green-800 p-6 text-white md:flex-row md:items-center">

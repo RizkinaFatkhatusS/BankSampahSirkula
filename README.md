@@ -37,3 +37,24 @@ Produksi: `npm run build` (jangan biarkan file `public/hot` tertinggal).
 - `app/Http/Controllers/{Customer,Supplier}` — controller per peran
 - `resources/js/Pages/{Customer,Supplier}` — halaman Vue
 - `tests/Feature/PenimbanganTest.php` — uji nilai final, saldo, dan hak akses (`php artisan test`)
+
+## Pembaruan PRD v1.6 (Admin, Super Admin, pendaftaran Supplier)
+
+Setelah menempelkan patch:
+```bash
+npm install                                # paket baru: qrcode (kode QR 2FA)
+php artisan migrate                        # 4 migration baru, data lama tetap aman
+php artisan db:seed --class=AdminSeeder    # katalog hak akses, role bawaan, data master, akun Super Admin/Admin contoh
+php artisan optimize:clear
+```
+Tambahkan ke `.env` (lihat `.env.example`): `MFA_WAJIB=true` (isi `false` hanya untuk pengembangan lokal), `SESI_STAF_MENIT=30`.
+
+Akun contoh (kata sandi `password`): `superadmin@sirkula.test`, `superadmin2@sirkula.test`,
+`verifikator@sirkula.test`, `pengelola@sirkula.test`, `pemantau@sirkula.test`.
+Super Admin dan Admin pemegang hak akses sensitif wajib mengatur 2FA (aplikasi autentikator) saat login pertama.
+
+Tugas terjadwal (jalankan `php artisan schedule:run` tiap menit lewat cron / Task Scheduler):
+`sirkula:pengajuan-kedaluwarsa`, `sirkula:pengajuan-pengingat`, `sirkula:setoran-ditunda-batal`, `sirkula:penyelesaian-nonaktif`.
+Email dikirim lewat antrean (`QUEUE_CONNECTION=database` + `php artisan queue:work` di produksi; `sync` untuk lokal). `MAIL_MAILER=log` menulis email ke `storage/logs`.
+
+Pemulihan darurat Super Admin: `php artisan sirkula:pulihkan-superadmin email@contoh.id --reset-mfa`

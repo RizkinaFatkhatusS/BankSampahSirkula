@@ -15,7 +15,13 @@ Route::get('/', fn () => Inertia::render('Welcome', [
 
 // /dashboard mengarahkan ke beranda sesuai peran (PRD 5.5)
 Route::get('/dashboard', function () {
-    return redirect()->route(Auth::user()->isSupplier() ? 'supplier.beranda' : 'customer.beranda');
+    $u = Auth::user();
+
+    return redirect()->route(match (true) {
+        $u->isStaf() => 'admin.beranda',
+        $u->isSupplier() => 'supplier.beranda',
+        default => 'customer.beranda',
+    });
 })->middleware('auth')->name('dashboard');
 
 // Profil akun (dipakai kedua peran)
@@ -94,3 +100,5 @@ Route::middleware(['auth', 'role:supplier'])->prefix('supplier')->name('supplier
 });
 
 require __DIR__.'/auth.php';
+require __DIR__.'/publik.php';
+require __DIR__.'/admin.php';

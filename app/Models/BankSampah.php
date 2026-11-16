@@ -41,6 +41,21 @@ class BankSampah extends Model
         return $this->hasMany(Mitra::class);
     }
 
+    /**
+     * Bank sampah yang tampil pada pencarian Customer (FR-37, FR-39, FR-41):
+     * akun Supplier Aktif, status tayang Tayang, dan punya jenis sampah aktif dengan harga.
+     */
+    public function scopeTampil($query)
+    {
+        return $query->where('status_tayang', 'tayang')
+            ->whereExists(fn ($q) => $q->selectRaw('1')->from('users')
+                ->whereColumn('users.bank_sampah_id', 'bank_sampah.id')
+                ->where('users.role', 'supplier')->where('users.status_akun', 'aktif'))
+            ->whereExists(fn ($q) => $q->selectRaw('1')->from('jenis_sampah')
+                ->whereColumn('jenis_sampah.bank_sampah_id', 'bank_sampah.id')
+                ->where('jenis_sampah.aktif', true)->where('jenis_sampah.harga_per_kg', '>', 0));
+    }
+
     public function fotoUrl(): ?string
     {
         return $this->foto ? Storage::url($this->foto) : null;

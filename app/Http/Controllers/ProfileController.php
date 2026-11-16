@@ -45,6 +45,9 @@ class ProfileController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Akun Supplier, Admin, dan Super Admin tidak dihapus agar jejak audit tetap utuh
+        abort_unless($request->user()->isCustomer(), 403, 'Akun ini tidak dapat dihapus.');
+
         $request->validate([
             'password' => ['required', 'current_password'],
         ]);

@@ -51,11 +51,11 @@ const tab = ref('setoran')
           <li v-for="m in mutasi" :key="m.id" class="flex items-center justify-between gap-3 px-5 py-3">
             <div>
               <p class="font-semibold">{{ m.tipe === 'setoran' ? 'Setoran' + (m.setoran_id ? ' #' + m.setoran_id : '') : 'Pencairan' }}</p>
-              <p class="text-xs text-gray-500">{{ m.tanggal }}<span v-if="m.cara"> · {{ m.cara }}</span></p>
+              <p class="text-xs text-gray-500">{{ m.tanggal }}<span v-if="m.bank"> · {{ m.bank }}</span><span v-if="m.cara"> · {{ m.cara }}</span></p>
             </div>
             <div class="text-right">
               <p class="font-bold" :class="m.tipe === 'setoran' ? 'text-green-700' : 'text-red-600'">{{ m.tipe === 'setoran' ? '+' : '−' }}{{ rp(m.nilai) }}</p>
-              <p class="text-xs text-gray-400">Saldo {{ rp(m.saldo_setelah) }}</p>
+              <p class="text-xs text-gray-400">Saldo bank ini {{ rp(m.saldo_setelah) }}</p>
             </div>
           </li>
         </ul>

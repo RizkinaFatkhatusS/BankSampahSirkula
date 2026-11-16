@@ -17,9 +17,13 @@ class PencairanController extends BaseController
     /** Customer yang pernah menyetor ke bank sampah ini beserta saldonya. */
     private function customers()
     {
+        // Hanya Customer yang punya saldo pada bank sampah ini (saldo dicatat per bank, FR-32)
+        $bankId = $this->bankId();
+
         return User::where('role', 'customer')
-            ->whereHas('setoran', fn ($q) => $q->where('bank_sampah_id', $this->bankId())->where('status', 'selesai'))
-            ->orderBy('nama')->get();
+            ->whereHas('mutasiSaldo', fn ($q) => $q->where('bank_sampah_id', $bankId))
+            ->orderBy('nama')->get()
+            ->filter(fn ($c) => $c->saldo($bankId) > 0)->values();
     }
 
     public function index()
@@ -27,7 +31,7 @@ class PencairanController extends BaseController
         $customers = $this->customers();
 
         return Inertia::render('Supplier/Pencairan', [
-            'customers' => $customers->map(fn ($c) => ['id' => $c->id, 'nama' => $c->nama, 'hp' => $c->nomor_hp, 'saldo' => $c->saldo()])->values(),
+            'customers' => $customers->map(fn ($c) => ['id' => $c->id, 'nama' => $c->nama, 'hp' => $c->nomor_hp, 'saldo' => $c->saldo($this->bankId())])->values(),
             'riwayat' => MutasiSaldo::with('customer:id,nama')->where('tipe', 'pencairan')
                 ->whereIn('customer_id', $customers->pluck('id'))->orderByDesc('id')->limit(50)->get()
                 ->map(fn ($m) => ['id' => $m->id, 'customer' => $m->customer->nama, 'nilai' => (float) $m->nilai, 'cara' => $m->cara_pencairan, 'saldo_setelah' => (float) $m->saldo_setelah, 'tanggal' => $m->tanggal->translatedFormat('d M Y')]),

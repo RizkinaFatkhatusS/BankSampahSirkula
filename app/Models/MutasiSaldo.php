@@ -21,6 +21,11 @@ class MutasiSaldo extends Model
         return $this->belongsTo(User::class, 'customer_id');
     }
 
+    public function bank(): BelongsTo
+    {
+        return $this->belongsTo(BankSampah::class, 'bank_sampah_id');
+    }
+
     public function setoran(): BelongsTo
     {
         return $this->belongsTo(Setoran::class);

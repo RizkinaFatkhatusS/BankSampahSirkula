@@ -29,6 +29,7 @@ class UserFactory extends Factory
             'email' => fake()->unique()->safeEmail(),
             'nomor_hp' => '08'.fake()->numerify('##########'),
             'role' => 'customer',
+            'status_akun' => 'aktif',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'remember_token' => Str::random(10),
@@ -41,6 +42,16 @@ class UserFactory extends Factory
     public function supplier(?int $bankId = null): static
     {
         return $this->state(fn () => ['role' => 'supplier', 'bank_sampah_id' => $bankId]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => ['role' => 'admin']);
+    }
+
+    public function superAdmin(): static
+    {
+        return $this->state(fn () => ['role' => 'super_admin']);
     }
 
     public function unverified(): static

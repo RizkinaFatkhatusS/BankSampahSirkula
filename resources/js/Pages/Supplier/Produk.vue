@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { router, useForm } from '@inertiajs/vue3'
+import { router, useForm, usePage } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
 import Field from '@/Components/Field.vue'
 import EmptyState from '@/Components/EmptyState.vue'
@@ -8,6 +8,7 @@ import ConfirmModal from '@/Components/ConfirmModal.vue'
 import { rp, angka, olahanLabel } from '@/utils'
 
 defineProps({ produk: Array })
+const labelOlahan = (k) => usePage().props.master?.label_olahan?.[k] ?? olahanLabel[k] ?? k
 const edit = ref(null)
 const hapus = ref(null)
 const form = useForm({ _method: 'patch', nama_produk: '', jumlah: '', satuan: '', harga_jual: '', foto: null })
@@ -25,7 +26,7 @@ const konfirmHapus = () => router.delete(route('supplier.produk.destroy', hapus.
         <img v-if="p.foto" :src="p.foto" alt="" class="h-32 w-full rounded-xl object-cover" />
         <div v-else class="flex h-32 items-center justify-center rounded-xl bg-green-100 text-4xl">📦</div>
         <p class="font-bold text-green-900">{{ p.nama }}</p>
-        <p class="text-xs text-gray-500">{{ olahanLabel[p.kategori] }}</p>
+        <p class="text-xs text-gray-500">{{ labelOlahan(p.kategori) }}</p>
         <div class="flex justify-between text-sm"><span>Stok <b :class="p.jumlah <= 0 ? 'text-red-600' : ''">{{ angka(p.jumlah) }} {{ p.satuan }}</b></span><b class="text-green-800">{{ rp(p.harga) }}</b></div>
         <div class="flex gap-2"><button class="btn btn-outline flex-1 !py-1.5" @click="buka(p)">Ubah</button><button class="btn btn-outline !border-red-200 !py-1.5 !text-red-600" @click="hapus = p">Hapus</button></div>
       </div>

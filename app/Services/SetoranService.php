@@ -35,6 +35,11 @@ class SetoranService
 
     public function ajukan(User $customer, BankSampah $bank, array $data, UploadedFile $foto): Setoran
     {
+        // Bank sampah yang ditangguhkan/dihentikan/tidak tayang tidak menerima setoran baru (FR-39, FR-50)
+        if (! BankSampah::tampil()->whereKey($bank->id)->exists()) {
+            throw ValidationException::withMessages(['bank_sampah_id' => 'Bank sampah ini sedang tidak menerima setoran. Silakan pilih bank sampah lain.']);
+        }
+
         [$jenis, $estimasi] = $this->hitungEstimasi($bank, $data['jenis_sampah_ids']);
 
         if ($jenis->count() !== count(array_unique($data['jenis_sampah_ids']))) {
@@ -88,17 +93,18 @@ class SetoranService
         DB::transaction(function () use ($setoran, $supplier, $alasan) {
             $setoran->update(['alasan_penolakan' => $alasan]);
             $this->ubahStatus($setoran, 'ditolak', $supplier);
-            $this->notif($setoran->customer, 'Setoran ditolak', "Setoran ditolak bank sampah. Alasan: {$alasan}", $setoran, 'peringatan');
+            $this->notif($setoran->customer, 'Setoran ditolak', "Setoran ditolak bank sampah. Alasan: {$alasan}", $setoran, 'peringatan', true);
         });
     }
 
     public function batalkan(Setoran $setoran, User $customer): void
     {
-        $this->pastikanStatus($setoran, Setoran::STATUS_SEBELUM_DITERIMA, 'Setoran sudah diterima bank sampah dan tidak dapat dibatalkan.');
+        $this->pastikanStatus($setoran, Setoran::STATUS_BISA_DIBATALKAN, 'Setoran sudah diterima bank sampah dan tidak dapat dibatalkan.');
 
         DB::transaction(function () use ($setoran, $customer) {
+            $setoran->update(['dibatalkan_oleh' => 'customer']);
             $this->ubahStatus($setoran, 'dibatalkan', $customer);
-            $this->notif($customer, 'Setoran dibatalkan', 'Setoran Anda telah dibatalkan.', $setoran);
+            $this->notif($customer, 'Setoran dibatalkan', 'Setoran Anda telah dibatalkan.', $setoran, 'info', true);
             $this->notifSupplier($setoran->bankSampah, 'Setoran dibatalkan', "{$customer->nama} membatalkan setorannya #{$setoran->id}.", $setoran);
         });
     }
@@ -181,11 +187,12 @@ class SetoranService
             }
 
             $customer = User::whereKey($setoran->customer_id)->lockForUpdate()->firstOrFail();
-            $saldoLama = $customer->saldo();
+            $saldoLama = $customer->saldo($setoran->bank_sampah_id); // saldo dicatat per bank sampah
             $saldoBaru = round($saldoLama + $totalNilai, 2);
 
             $mutasi = MutasiSaldo::create([
                 'customer_id' => $customer->id,
+                'bank_sampah_id' => $setoran->bank_sampah_id,
                 'setoran_id' => $setoran->id,
                 'tipe' => 'setoran',
                 'nilai' => $totalNilai,
@@ -210,6 +217,7 @@ class SetoranService
                 'Berat aktual '.rtrim(rtrim(number_format($totalBerat, 2, ',', '.'), '0'), ',').' kg, nilai final '.self::rp($totalNilai).'. Saldo terbaru Anda '.self::rp($saldoBaru).'.',
                 $setoran,
                 'sukses',
+                true,
             );
 
             return $setoran->fresh('items.jenisSampah');
@@ -221,7 +229,8 @@ class SetoranService
     {
         return DB::transaction(function () use ($supplier, $customer, $nilai, $cara) {
             $customer = User::whereKey($customer->id)->lockForUpdate()->firstOrFail();
-            $saldoLama = $customer->saldo();
+            $bankId = $supplier->bank_sampah_id;
+            $saldoLama = $customer->saldo($bankId); // hanya saldo di bank sampah ini yang dapat dicairkan
 
             if ($nilai <= 0 || $nilai > $saldoLama) {
                 throw ValidationException::withMessages(['nilai' => 'Nilai pencairan harus lebih dari 0 dan tidak melebihi saldo ('.self::rp($saldoLama).').']);
@@ -230,6 +239,7 @@ class SetoranService
             $saldoBaru = round($saldoLama - $nilai, 2);
             $mutasi = MutasiSaldo::create([
                 'customer_id' => $customer->id,
+                'bank_sampah_id' => $bankId,
                 'tipe' => 'pencairan',
                 'nilai' => $nilai,
                 'saldo_setelah' => $saldoBaru,
@@ -238,7 +248,7 @@ class SetoranService
             ]);
 
             KasBankSampah::create([
-                'bank_sampah_id' => $supplier->bank_sampah_id,
+                'bank_sampah_id' => $bankId,
                 'jenis' => 'keluar',
                 'sumber' => 'pencairan',
                 'nominal' => $nilai,
@@ -247,7 +257,7 @@ class SetoranService
             ]);
 
             AuditLogger::catat('mutasi_saldo', $mutasi->id, 'pencairan', ['saldo' => $saldoLama], ['saldo' => $saldoBaru]);
-            $this->notif($customer, 'Pencairan saldo dicatat', self::rp($nilai)." dicairkan via {$cara}. Saldo terbaru ".self::rp($saldoBaru).'.', null, 'info');
+            $this->notif($customer, 'Pencairan saldo dicatat', self::rp($nilai)." dicairkan via {$cara}. Saldo terbaru ".self::rp($saldoBaru).'.', null, 'info', true);
 
             return $mutasi;
         });
@@ -274,9 +284,21 @@ class SetoranService
         $setoran->riwayatPenjemputan()->create(['status' => $status, 'pencatat_id' => $pencatat->id, 'waktu_perubahan' => now()]);
     }
 
-    private function notif(User $user, string $judul, string $pesan, ?Setoran $setoran = null, string $tipe = 'info'): void
+    /** Notifikasi dalam aplikasi; $email = true bila peristiwa juga dikirim lewat email (Matriks notifikasi). */
+    private function notif(User $user, string $judul, string $pesan, ?Setoran $setoran = null, string $tipe = 'info', bool $email = false): void
     {
         $user->notify(new SetoranNotification($judul, $pesan, $setoran?->id, $tipe));
+
+        if ($email) {
+            EmailService::kirimKeUser(
+                $user,
+                'notifikasi_customer',
+                $judul,
+                [$pesan],
+                $setoran ? 'Lihat setoran' : 'Buka SIRKULA',
+                $setoran ? route('customer.setoran.show', $setoran->id) : route('customer.riwayat'),
+            );
+        }
     }
 
     private function notifSupplier(BankSampah $bank, string $judul, string $pesan, Setoran $setoran): void

@@ -25,7 +25,7 @@ class RiwayatController extends Controller
                     'status' => $s->status,
                     'tanggal' => $s->created_at->translatedFormat('d M Y'),
                 ]),
-            'mutasi' => $user->mutasiSaldo()->orderByDesc('id')->limit(100)->get()
+            'mutasi' => $user->mutasiSaldo()->with('bank:id,nama')->orderByDesc('id')->limit(100)->get()
                 ->map(fn ($m) => [
                     'id' => $m->id,
                     'tipe' => $m->tipe,
@@ -33,6 +33,7 @@ class RiwayatController extends Controller
                     'saldo_setelah' => (float) $m->saldo_setelah,
                     'cara' => $m->cara_pencairan,
                     'setoran_id' => $m->setoran_id,
+                    'bank' => $m->bank?->nama,
                     'tanggal' => $m->tanggal->translatedFormat('d M Y'),
                 ]),
         ]);

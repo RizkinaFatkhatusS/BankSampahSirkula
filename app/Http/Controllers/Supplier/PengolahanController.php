@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\Supplier;
 
+use App\Models\MasterKategori;
 use App\Models\Pengolahan;
+use Illuminate\Validation\Rule;
 use App\Models\Setoran;
 use App\Services\AuditLogger;
 use Illuminate\Http\Request;
@@ -39,12 +41,12 @@ class PengolahanController extends BaseController
     public function store(Request $request)
     {
         $data = $request->validate([
-            'kategori_sampah' => ['required', 'in:organik,anorganik'],
-            'jenis_olahan' => ['required', 'in:pupuk_cair,kerajinan,energi_lain'],
+            'kategori_sampah' => ['required', Rule::in(array_keys(MasterKategori::daftar('kategori_sampah')))],
+            'jenis_olahan' => ['required', Rule::in(array_keys(MasterKategori::daftar('kategori_olahan')))],
             'berat_diolah' => ['nullable', 'numeric', 'min:0'],
             'tanggal' => ['required', 'date'],
             'catatan' => ['nullable', 'string', 'max:1000'],
-            'foto_dokumentasi' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:2048'],
+            'foto_dokumentasi' => ['required', 'file', 'mimes:jpg,jpeg,png', 'max:'.\App\Services\Pengaturan::maksKb()],
             'setoran_ids' => ['nullable', 'array'],
             'setoran_ids.*' => ['integer'],
             'produk' => ['required', 'array', 'min:1'],
