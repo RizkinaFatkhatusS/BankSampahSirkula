@@ -11,6 +11,10 @@ const props = defineProps({
 })
 const emit = defineEmits(['pilih'])
 const el = ref(null)
+const keyword = ref('')
+const hasilPencarian = ref([])
+const loadingSearch = ref(false)
+const errorSearch = ref('')
 let map, layer
 
 const ikon = (warna, aktif) =>
@@ -37,6 +41,53 @@ function gambar() {
   else if (pts.length > 1) map.fitBounds(pts, { padding: [30, 30], maxZoom: 15 })
 }
 
+async function cariLokasi() {
+  if (!keyword.value.trim()) return
+
+  loadingSearch.value = true
+  errorSearch.value = ''
+  hasilPencarian.value = []
+
+  try {
+    const params = new URLSearchParams({
+      q: keyword.value,
+      format: 'jsonv2',
+      limit: '5',
+      countrycodes: 'id',
+      'accept-language': 'id'
+    })
+
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params}`
+    )
+
+    if (!response.ok) throw new Error('Gagal mencari lokasi.')
+
+    const data = await response.json()
+
+    if (!data.length) {
+      errorSearch.value = 'Lokasi tidak ditemukan.'
+      return
+    }
+
+    hasilPencarian.value = data
+  } catch (error) {
+    errorSearch.value = 'Terjadi kesalahan saat mencari lokasi.'
+  } finally {
+    loadingSearch.value = false
+  }
+}
+
+function pilihHasil(item) {
+  const lat = Number(item.lat)
+  const lng = Number(item.lon)
+
+  map.setView([lat, lng], 16)
+
+  keyword.value = item.display_name
+  hasilPencarian.value = []
+}
+
 onMounted(() => {
   map = L.map(el.value, { scrollWheelZoom: false }).setView([-6.3745, 106.8227], 13)
   L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -50,6 +101,59 @@ onMounted(() => {
 onBeforeUnmount(() => map && map.remove())
 watch(() => [props.markers, props.selectedId], gambar, { deep: true })
 </script>
+
 <template>
-  <div ref="el" class="z-0 w-full overflow-hidden rounded-xl ring-1 ring-green-200" :style="{ height }" />
+  <div class="space-y-2">
+
+    <!-- Search Location -->
+    <form
+      class="flex gap-2"
+      @submit.prevent="cariLokasi"
+    >
+      <input
+        v-model="keyword"
+        type="text"
+        placeholder="Cari lokasi..."
+        class="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-green-500 focus:outline-none"
+      />
+
+      <button
+        type="submit"
+        :disabled="loadingSearch"
+        class="rounded-lg bg-green-700 px-4 py-2 text-sm font-semibold text-white hover:bg-green-800 disabled:opacity-50"
+      >
+        {{ loadingSearch ? 'Mencari...' : 'Cari' }}
+      </button>
+    </form>
+
+    <!-- Hasil pencarian -->
+    <div
+      v-if="hasilPencarian.length"
+      class="max-h-40 overflow-y-auto rounded-lg border border-gray-200 bg-white"
+    >
+      <button
+        v-for="item in hasilPencarian"
+        :key="item.place_id"
+        type="button"
+        @click="pilihHasil(item)"
+        class="block w-full border-b border-gray-100 p-3 text-left text-xs hover:bg-green-50"
+      >
+        {{ item.display_name }}
+      </button>
+    </div>
+
+    <p v-if="errorSearch" class="text-xs text-amber-700">
+      {{ errorSearch }}
+    </p>
+
+    <!-- Peta -->
+    <div
+      ref="el"
+      class="z-0 w-full overflow-hidden rounded-xl ring-1 ring-green-200"
+      :style="{ height }"
+    />
+  </div>
 </template>
+<!-- <template>
+  <div ref="el" class="z-0 w-full overflow-hidden rounded-xl ring-1 ring-green-200" :style="{ height }" />
+</template> -->
