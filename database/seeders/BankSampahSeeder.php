@@ -11,6 +11,7 @@ use App\Models\Setoran;
 use App\Models\User;
 use App\Services\SetoranService;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -43,21 +44,70 @@ class BankSampahSeeder extends Seeder
         ];
 
         foreach ($banks as $i => [$nama, $alamat, $lat, $lng, $hp, $jam, $email, $pj]) {
-            $bank = BankSampah::create(['nama' => $nama, 'alamat' => $alamat, 'latitude' => $lat, 'longitude' => $lng, 'nomor_kontak' => $hp, 'jam_operasional' => $jam]);
+       $bank = BankSampah::updateOrCreate(
+    ['nama' => $nama],
+    [
+        'alamat' => $alamat,
+        'latitude' => $lat,
+        'longitude' => $lng,
+        'nomor_kontak' => $hp,
+        'jam_operasional' => $jam,
+    ]
+);
+        // $bank = BankSampah::create(['nama' => $nama, 'alamat' => $alamat, 'latitude' => $lat, 'longitude' => $lng, 'nomor_kontak' => $hp, 'jam_operasional' => $jam]);
 
-            User::create(['nama' => $pj, 'email' => $email, 'nomor_hp' => $hp, 'password' => 'password', 'role' => 'supplier', 'bank_sampah_id' => $bank->id]);
+            User::updateOrCreate(
+    ['email' => $email],
+    [
+        'nama' => $pj,
+        'nomor_hp' => $hp,
+        'password' => 'password',
+        'role' => 'supplier',
+        'bank_sampah_id' => $bank->id,
+    ]
+);
 
             foreach ($jenisAwal as [$n, $ikon, $kat, $harga]) {
                 // bank kedua tidak menerima organik, supaya filter Organik terlihat bedanya
                 if ($i === 1 && $kat === 'organik') {
                     continue;
                 }
-                JenisSampah::create(['bank_sampah_id' => $bank->id, 'nama' => $n, 'ikon' => $ikon, 'kategori' => $kat, 'harga_per_kg' => $harga + $i * 100, 'berlaku_sejak' => now()->toDateString()]);
-            }
+               // JenisSampah::create(['bank_sampah_id' => $bank->id, 'nama' => $n, 'ikon' => $ikon, 'kategori' => $kat, 'harga_per_kg' => $harga + $i * 100, 'berlaku_sejak' => now()->toDateString()]);
+           JenisSampah::updateOrCreate(
+    [
+        'bank_sampah_id' => $bank->id,
+        'nama' => $n,
+    ],
+    [
+        'ikon' => $ikon,
+        'kategori' => $kat,
+        'harga_per_kg' => $harga + $i * 100,
+        'berlaku_sejak' => now()->toDateString(),
+    ]
+);
+               }
         }
+$siti = User::updateOrCreate(
+    ['email' => 'customer@sirkula.test'],
+    [
+        'nama' => 'Siti Aminah',
+        'nomor_hp' => '081233334444',
+        'password' => 'password',
+        'role' => 'customer',
+    ]
+);
 
-        $siti = User::create(['nama' => 'Siti Aminah', 'email' => 'customer@sirkula.test', 'nomor_hp' => '081233334444', 'password' => 'password', 'role' => 'customer']);
-        $budi = User::create(['nama' => 'Budi Hartono', 'email' => 'budi@sirkula.test', 'nomor_hp' => '081255556666', 'password' => 'password', 'role' => 'customer']);
+$budi = User::updateOrCreate(
+    ['email' => 'budi@sirkula.test'],
+    [
+        'nama' => 'Budi Hartono',
+        'nomor_hp' => '081255556666',
+        'password' => 'password',
+        'role' => 'customer',
+    ]
+);
+        // $siti = User::create(['nama' => 'Siti Aminah', 'email' => 'customer@sirkula.test', 'nomor_hp' => '081233334444', 'password' => 'password', 'role' => 'customer']);
+        // $budi = User::create(['nama' => 'Budi Hartono', 'email' => 'budi@sirkula.test', 'nomor_hp' => '081255556666', 'password' => 'password', 'role' => 'customer']);
 
         $this->dataContoh(BankSampah::first(), User::where('email', 'supplier@sirkula.test')->first(), $siti, $budi);
     }
@@ -81,7 +131,7 @@ class BankSampahSeeder extends Seeder
             foreach ($setoran->items as $item) {
                 $beratPerItem[$item->id] = $berat[$item->jenisSampah->nama];
             }
-            auth()->setUser($supplier);
+            Auth::setUser($supplier);
             $service->timbang($setoran, $supplier, $beratPerItem);
             $selesai = $waktu->copy()->addHours(3);
             $setoran->forceFill(['created_at' => $waktu, 'ditimbang_pada' => $selesai])->save();
