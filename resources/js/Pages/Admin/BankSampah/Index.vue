@@ -38,7 +38,7 @@ const peta = ({ lat, lng }) => { form.latitude = lat; form.longitude = lng }
         <div><label class="mb-1 block font-medium">Alamat</label><textarea v-model="form.alamat" rows="2" class="input" /><p v-if="form.errors.alamat" class="text-red-600">{{ form.errors.alamat }}</p></div>
         <MapPicker v-if="edit" :lat="form.latitude" :lng="form.longitude" height="180px" @update="peta" />
         <div><label class="mb-1 block font-medium">Alasan <span v-if="edit && form.status_tayang !== edit.status_tayang" class="text-red-500">*</span></label><input v-model="form.alasan" class="input" /><p v-if="form.errors.alasan" class="text-red-600">{{ form.errors.alasan }}</p></div>
-        <p class="text-xs text-gray-500">Data tidak dihapus. Perubahan tercatat pada log audit.</p>
+        <p class="text-xs text-gray-500">Data tidak dihapus. Perubahan tercatat pada log audit..</p>
       </div>
     </ConfirmModal>
   </AppLayout>
