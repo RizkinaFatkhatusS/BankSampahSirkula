@@ -38,11 +38,45 @@ return [
             'report' => false,
         ],
 
-        'public' => [
+        // Disk "public": foto & bukti (dapat diakses publik).
+        // Lokal  : PUBLIC_DISK_DRIVER=local (default, storage/app/public)
+        // Vercel : PUBLIC_DISK_DRIVER=s3    (Supabase Storage, bucket publik)
+        'public' => env('PUBLIC_DISK_DRIVER', 'local') === 's3' ? [
+            'driver' => 's3',
+            'key' => env('SUPABASE_S3_KEY'),
+            'secret' => env('SUPABASE_S3_SECRET'),
+            'region' => env('SUPABASE_S3_REGION', 'ap-northeast-1'),
+            'bucket' => env('SUPABASE_BUCKET_PUBLIC'),
+            'endpoint' => env('SUPABASE_S3_ENDPOINT'),
+            'url' => env('SUPABASE_PUBLIC_URL'),
+            'use_path_style_endpoint' => true,
+            'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ] : [
             'driver' => 'local',
             'root' => storage_path('app/public'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
+            'throw' => false,
+            'report' => false,
+        ],
+
+        // Disk "dokumen": berkas verifikasi pengajuan Supplier (PRIVAT, tanpa URL publik).
+        // Vercel : DOKUMEN_DISK_DRIVER=s3 (Supabase Storage, bucket PRIVAT)
+        'dokumen' => env('DOKUMEN_DISK_DRIVER', 'local') === 's3' ? [
+            'driver' => 's3',
+            'key' => env('SUPABASE_S3_KEY'),
+            'secret' => env('SUPABASE_S3_SECRET'),
+            'region' => env('SUPABASE_S3_REGION', 'ap-northeast-1'),
+            'bucket' => env('SUPABASE_BUCKET_PRIVATE'),
+            'endpoint' => env('SUPABASE_S3_ENDPOINT'),
+            'use_path_style_endpoint' => true,
+            'throw' => false,
+            'report' => false,
+        ] : [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
             'throw' => false,
             'report' => false,
         ],

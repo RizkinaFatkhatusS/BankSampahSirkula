@@ -16,7 +16,7 @@ use Illuminate\Validation\ValidationException;
 /** Pendaftaran, verifikasi, dan penerbitan akun Supplier (FR-35 s.d. FR-38, FR-46). */
 class PengajuanService
 {
-    public const DISK = 'local'; // disk private: dokumen verifikasi tidak punya URL publik
+    public const DISK = 'dokumen'; // disk private: dokumen verifikasi tidak punya URL publik
 
     /** Aturan validasi formulir pengajuan (publik maupun manual oleh Admin). */
     public static function aturan(bool $semuaDokumen = true): array
