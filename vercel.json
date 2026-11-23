@@ -1,7 +1,8 @@
 {
+    "$schema": "https://openapi.vercel.sh/vercel.json",
     "version": 2,
     "framework": null,
-    "buildCommand": "npm run build && rm -rf dist && mkdir -p dist && cp -r public/. dist/ && rm -f dist/index.php dist/.htaccess",
+    "buildCommand": "composer install --no-dev --optimize-autoloader && npm ci && npm run build && rm -rf dist && mkdir -p dist && cp -r public/. dist/ && rm -f dist/index.php dist/.htaccess",
     "outputDirectory": "dist",
     "functions": {
         "api/index.php": {
@@ -9,8 +10,10 @@
             "maxDuration": 30
         }
     },
-    "routes": [
-        { "handle": "filesystem" },
-        { "src": "/(.*)", "dest": "/api/index.php" }
+    "rewrites": [
+        {
+            "source": "/(.*)",
+            "destination": "/api/index.php"
+        }
     ]
 }
