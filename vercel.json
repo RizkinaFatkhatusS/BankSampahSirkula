@@ -1,8 +1,8 @@
 {
     "version": 2,
     "framework": null,
-    "buildCommand": "npm run build && rm -f public/index.php",
-    "outputDirectory": "public",
+    "buildCommand": "npm run build && rm -rf dist && mkdir -p dist && cp -r public/. dist/ && rm -f dist/index.php dist/.htaccess",
+    "outputDirectory": "dist",
     "functions": {
         "api/index.php": {
             "runtime": "vercel-php@0.7.4",
@@ -10,7 +10,6 @@
         }
     },
     "routes": [
-        { "src": "/index.php", "dest": "/api/index.php" },
         { "handle": "filesystem" },
         { "src": "/(.*)", "dest": "/api/index.php" }
     ]
